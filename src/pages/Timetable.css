@@ -1,0 +1,124 @@
+/* Timetable specific styles */
+
+.excel-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.excel-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #e0f2fe;
+    border-radius: 10px;
+    color: #0369a1;
+}
+
+.excel-info .material-icons-round {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.excel-info p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.excel-table-container {
+    max-height: 400px;
+    overflow: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.excel-table th,
+.excel-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.excel-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.excel-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.excel-table .invalid-row {
+    background: #fef2f2;
+}
+
+.excel-table .invalid-row:hover {
+    background: #fee2e2;
+}
+
+.excel-table .btn-icon {
+    padding: 4px;
+}
+
+.excel-table .btn-icon .material-icons-round {
+    font-size: 18px;
+}
+
+.excel-summary {
+    display: flex;
+    gap: 24px;
+}
+
+.excel-summary .valid-count,
+.excel-summary .invalid-count {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.excel-summary .valid-count {
+    color: #059669;
+}
+
+.excel-summary .valid-count .material-icons-round {
+    color: #10b981;
+}
+
+.excel-summary .invalid-count {
+    color: #dc2626;
+}
+
+.excel-summary .invalid-count .material-icons-round {
+    color: #ef4444;
+}
+
+/* Download template link */
+.download-template {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #8b5cf6;
+    font-size: 13px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.download-template:hover {
+    text-decoration: underline;
+}

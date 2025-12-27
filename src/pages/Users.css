@@ -1,0 +1,236 @@
+.users-page {
+    animation: fadeIn 0.3s ease;
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar-small {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+/* Form Styles */
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 10px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #111827;
+    transition: all 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.form-group input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+@media (max-width: 576px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Section Assignment Styles */
+.section-assignment {
+    margin-top: 8px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.section-assignment h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.section-assignment h4 .material-icons-round {
+    font-size: 20px;
+    color: #8b5cf6;
+}
+
+.section-hint {
+    margin: 0 0 16px 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.assigned-sections-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.section-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #334155;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.section-chip .material-icons-round {
+    font-size: 16px;
+    color: #8b5cf6;
+}
+
+.chip-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    background: #fee2e2;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chip-remove .material-icons-round {
+    font-size: 12px;
+    color: #ef4444;
+}
+
+.chip-remove:hover {
+    background: #fecaca;
+}
+
+.add-section-form {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e1;
+}
+
+.add-section-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.add-section-form .form-group {
+    gap: 4px;
+}
+
+.add-section-form .form-group label {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.add-section-form select {
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
+.btn-add-section {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 38px;
+}
+
+.btn-add-section:hover {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    transform: translateY(-1px);
+}
+
+.btn-add-section .material-icons-round {
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .add-section-form .form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .btn-add-section {
+        grid-column: span 2;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .add-section-form .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-add-section {
+        grid-column: 1;
+    }
+}

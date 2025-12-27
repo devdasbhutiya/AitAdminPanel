@@ -1,0 +1,9 @@
+export { default as usersService } from './usersService';
+export { default as coursesService } from './coursesService';
+export { default as branchesService } from './branchesService';
+export { default as eventsService } from './eventsService';
+export { default as noticesService } from './noticesService';
+export { default as timetableService } from './timetableService';
+export { default as assignmentsService } from './assignmentsService';
+export { default as attendanceService } from './attendanceService';
+export { default as studentsService } from './studentsService';
