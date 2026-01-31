@@ -10,3 +10,4 @@ export { default as Assignments } from './Assignments';
 export { default as Analytics } from './Analytics';
 export { default as Attendance } from './Attendance';
 export { default as Students } from './Students';
+export { default as Results } from './Results';

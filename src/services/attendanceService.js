@@ -152,7 +152,7 @@ export const attendanceService = {
     // Update attendance summaries for all students in a class
     async updateAttendanceSummaries(attendanceData) {
         try {
-            const { courseId, presentStudents, totalStudents } = attendanceData;
+            const { courseId, presentStudents, totalStudents, totalStudentsList } = attendanceData;
 
             // We need to get all attendance records for this course to calculate totals
             const courseAttendance = await this.getAll({
@@ -163,15 +163,20 @@ export const attendanceService = {
 
             const totalClasses = courseAttendance.length;
 
-            // For each student, calculate their attendance
-            // Get all unique students who have ever been marked present in any class
+            // Get all unique students - include both present students AND full student list
             const allStudents = new Set();
+
+            // Add students from historical attendance records
             courseAttendance.forEach(record => {
                 (record.presentStudents || []).forEach(s => allStudents.add(s));
+                // Also add from totalStudentsList if available (for absent students)
+                (record.totalStudentsList || []).forEach(s => allStudents.add(s));
             });
 
-            // Also include students from the current attendance data
+            // Add students from the current attendance data
             (presentStudents || []).forEach(s => allStudents.add(s));
+            // Add ALL students from the current class (includes absent students)
+            (totalStudentsList || []).forEach(s => allStudents.add(s));
 
             // Update summary for each student
             for (const enrollmentNo of allStudents) {

@@ -237,7 +237,9 @@ const Attendance = () => {
                 section: filters.section,
                 date: filters.date,
                 presentStudents: Array.from(presentStudents),
-                totalStudents: students.length
+                totalStudents: students.length,
+                // Include ALL students for proper absent tracking
+                totalStudentsList: students.map(s => s.enrollmentNo)
             };
 
             await attendanceService.markAttendance(attendanceData, userData);

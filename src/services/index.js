@@ -7,3 +7,4 @@ export { default as timetableService } from './timetableService';
 export { default as assignmentsService } from './assignmentsService';
 export { default as attendanceService } from './attendanceService';
 export { default as studentsService } from './studentsService';
+export { default as resultsService } from './resultsService';

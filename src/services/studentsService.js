@@ -10,7 +10,9 @@ import {
     deleteDoc,
     query,
     where,
-    Timestamp
+    Timestamp,
+    setDoc,
+    createUserWithSecondaryApp
 } from './firebase';
 
 const COLLECTION = 'students';
@@ -76,17 +78,48 @@ export const studentsService = {
         }
     },
 
-    // Create new student
+    // Create new student with Firebase Auth account
     async create(studentData, currentUser) {
         try {
+            // Email is required for Firebase Auth
+            if (!studentData.email || !studentData.email.trim()) {
+                throw new Error('Email is required to create a student account');
+            }
+
             // Check if enrollment number already exists
             const existing = await this.getByEnrollmentNo(studentData.enrollmentNo);
             if (existing) {
                 throw new Error('A student with this enrollment number already exists');
             }
 
+            // Use enrollment number as default password
+            const defaultPassword = studentData.enrollmentNo.toString();
+
+            // Create Firebase Auth account using secondary app (doesn't logout admin)
+            const newUser = await createUserWithSecondaryApp(
+                studentData.email.trim(),
+                defaultPassword
+            );
+
+            // Create user document in 'users' collection with auth UID
+            await setDoc(doc(db, 'users', newUser.uid), {
+                name: studentData.name,
+                email: studentData.email.trim(),
+                role: 'student',
+                enrollmentNo: studentData.enrollmentNo,
+                branch: studentData.branch,
+                semester: studentData.semester,
+                section: studentData.section,
+                createdBy: currentUser?.uid || '',
+                createdByName: currentUser?.name || 'User',
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
+            });
+
+            // Create student document in 'students' collection
             const docData = {
                 ...studentData,
+                authUid: newUser.uid, // Link to Firebase Auth UID
                 createdBy: currentUser?.uid || '',
                 createdByName: currentUser?.name || 'User',
                 createdAt: Timestamp.now(),

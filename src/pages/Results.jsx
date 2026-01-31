@@ -1,35 +1,36 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { studentsService, branchesService } from '../services';
+import { resultsService, branchesService, studentsService } from '../services';
 import { DataTable, Modal, ConfirmModal } from '../components/common';
 import * as XLSX from 'xlsx';
 import { SECTIONS } from '../utils/helpers';
 import './Users.css';
 
-const Students = () => {
+const Results = () => {
     const { canPerformAction, userData } = useAuth();
     const { showSuccess, showError, showInfo } = useToast();
-    const [students, setStudents] = useState([]);
+    const [results, setResults] = useState([]);
     const [branches, setBranches] = useState([]);
+    const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState(null);
+    const [selectedResult, setSelectedResult] = useState(null);
     const [formData, setFormData] = useState({
         enrollmentNo: '',
-        name: '',
-        admissionYear: '',
-        semester: '',
+        studentName: '',
         branch: '',
+        semester: '',
         section: '',
-        isDtoD: false,
-        dateOfBirth: '',
-        classMentor: '',
-        contactNo: '',
-        parentContactNo: '',
-        email: '',
-        abcId: ''
+        subjectCode: '',
+        subjectName: '',
+        credits: '',
+        mid1Marks: '',
+        mid2Marks: '',
+        finalMidMarks: '',
+        grade: '',
+        academicYear: new Date().getFullYear()
     });
 
     // Excel upload states
@@ -43,7 +44,8 @@ const Students = () => {
         branch: '',
         semester: '',
         section: '',
-        admissionYear: ''
+        academicYear: '',
+        enrollmentNo: ''
     });
 
     useEffect(() => { loadData(); }, []);
@@ -51,82 +53,114 @@ const Students = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [studentsData, branchesData] = await Promise.all([
-                studentsService.getAll(),
-                branchesService.getAll()
+            const [resultsData, branchesData, studentsData] = await Promise.all([
+                resultsService.getAll(),
+                branchesService.getAll(),
+                studentsService.getAll()
             ]);
-            setStudents(studentsData);
+            setResults(resultsData);
             setBranches(branchesData);
+            setStudents(studentsData);
         } catch (error) {
-            showError('Failed to load students');
+            showError('Failed to load results');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleOpenModal = (student = null) => {
-        setSelectedStudent(student);
-        setFormData(student ? { ...student } : {
+    // Calculate grade and final marks
+    const calculateResults = (mid1, mid2) => {
+        const mid1Marks = parseFloat(mid1) || 0;
+        const mid2Marks = parseFloat(mid2) || 0;
+        const finalMidMarks = (mid1Marks + mid2Marks) / 2;
+        const percentage = (finalMidMarks / 30) * 100;
+
+        let grade = 'F';
+        if (percentage >= 90) grade = 'A+';
+        else if (percentage >= 80) grade = 'A';
+        else if (percentage >= 70) grade = 'B+';
+        else if (percentage >= 60) grade = 'B';
+        else if (percentage >= 50) grade = 'C';
+        else if (percentage >= 40) grade = 'D';
+
+        return { finalMidMarks: finalMidMarks.toFixed(1), grade };
+    };
+
+    const handleOpenModal = (result = null) => {
+        setSelectedResult(result);
+        setFormData(result ? { ...result } : {
             enrollmentNo: '',
-            name: '',
-            admissionYear: '',
-            semester: '',
+            studentName: '',
             branch: '',
+            semester: '',
             section: '',
-            isDtoD: false,
-            dateOfBirth: '',
-            classMentor: '',
-            contactNo: '',
-            parentContactNo: '',
-            email: '',
-            abcId: ''
+            subjectCode: '',
+            subjectName: '',
+            credits: '',
+            mid1Marks: '',
+            mid2Marks: '',
+            finalMidMarks: '',
+            grade: '',
+            academicYear: new Date().getFullYear()
         });
         setModalOpen(true);
+    };
+
+    const handleStudentSelect = (enrollmentNo) => {
+        const student = students.find(s => s.enrollmentNo === enrollmentNo);
+        if (student) {
+            setFormData(prev => ({
+                ...prev,
+                enrollmentNo: student.enrollmentNo,
+                studentName: student.name,
+                branch: student.branch,
+                semester: student.semester,
+                section: student.section
+            }));
+        }
+    };
+
+    const handleMarksChange = (field, value) => {
+        const updated = { ...formData, [field]: value };
+
+        if (field === 'mid1Marks' || field === 'mid2Marks') {
+            const calculated = calculateResults(
+                field === 'mid1Marks' ? value : updated.mid1Marks,
+                field === 'mid2Marks' ? value : updated.mid2Marks
+            );
+            updated.finalMidMarks = calculated.finalMidMarks;
+            updated.grade = calculated.grade;
+        }
+
+        setFormData(updated);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            if (selectedStudent) {
-                await studentsService.update(selectedStudent.id, formData, userData);
-                showSuccess('Student updated');
+            if (selectedResult) {
+                await resultsService.update(selectedResult.id, formData, userData);
+                showSuccess('Result updated');
             } else {
-                await studentsService.create(formData, userData);
-                showSuccess('Student created');
+                await resultsService.create(formData, userData);
+                showSuccess('Result created');
             }
             setModalOpen(false);
             loadData();
         } catch (error) {
-            showError(error.message || 'Failed to save student');
+            showError(error.message || 'Failed to save result');
         }
     };
 
     const handleDelete = async () => {
         try {
-            await studentsService.delete(selectedStudent.id, userData);
-            showSuccess('Student deleted');
+            await resultsService.delete(selectedResult.id, userData);
+            showSuccess('Result deleted');
             setDeleteModalOpen(false);
             loadData();
         } catch (error) {
-            showError(error.message || 'Failed to delete student');
+            showError(error.message || 'Failed to delete result');
         }
-    };
-
-    // Helper function to map branch code/name to branch name
-    const mapBranchToName = (branchValue) => {
-        if (!branchValue) return '';
-        const branchStr = String(branchValue).trim();
-
-        // First, check if it's already a full branch name
-        const exactMatch = branches.find(b => b.name.toLowerCase() === branchStr.toLowerCase());
-        if (exactMatch) return exactMatch.name;
-
-        // Then, check if it's a branch code
-        const codeMatch = branches.find(b => b.code.toLowerCase() === branchStr.toLowerCase());
-        if (codeMatch) return codeMatch.name;
-
-        // Return original value if no match found
-        return branchStr;
     };
 
     // Excel upload handlers
@@ -143,29 +177,34 @@ const Students = () => {
                 const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
                 // Map Excel columns to our data structure
-                const rawBranch = (row) => row.Branch || row.branch || row.BRANCH || row.Department || '';
-                const mappedData = jsonData.map((row, index) => ({
-                    id: `temp-${index}`,
-                    enrollmentNo: row['Enrollment No'] || row.enrollmentNo || row['Enrollment Number'] || '',
-                    name: row.Name || row.name || row.NAME || '',
-                    admissionYear: row['Admission Year'] || row.admissionYear || row.Year || '',
-                    semester: row.Semester || row.semester || row.Sem || '',
-                    branch: mapBranchToName(rawBranch(row)),
-                    section: row.Section || row.section || row.SECTION || '',
-                    isDtoD: row.IsDtoD === true || row.IsDtoD === 'true' || row.IsDtoD === 'Yes' || row.isDtoD === 'Y' || false,
-                    dateOfBirth: row['Date of Birth'] || row.dateOfBirth || row.DOB || '',
-                    classMentor: row['Class Mentor'] || row.classMentor || row.Mentor || '',
-                    contactNo: row['Contact No'] || row.contactNo || row.Contact || row.Mobile || '',
-                    parentContactNo: row['Parent Contact No'] || row.parentContactNo || row['Parent Contact'] || '',
-                    email: row.Email || row.email || row.EMAIL || '',
-                    abcId: row['ABC ID'] || row.abcId || row.ABCID || '',
-                    isValid: true
-                }));
+                const mappedData = jsonData.map((row, index) => {
+                    const mid1 = parseFloat(row['Mid-1 Marks'] || row.mid1Marks || 0);
+                    const mid2 = parseFloat(row['Mid-2 Marks'] || row.mid2Marks || 0);
+                    const calculated = calculateResults(mid1, mid2);
 
-                // Validate data - email is now required for Firebase Auth
+                    return {
+                        id: `temp-${index}`,
+                        enrollmentNo: row['Enrollment No'] || row.enrollmentNo || '',
+                        studentName: row['Student Name'] || row.studentName || row.Name || '',
+                        branch: row.Branch || row.branch || '',
+                        semester: row.Semester || row.semester || '',
+                        section: row.Section || row.section || '',
+                        subjectCode: row['Subject Code'] || row.subjectCode || '',
+                        subjectName: row['Subject Name'] || row.subjectName || '',
+                        credits: row.Credits || row.credits || '',
+                        mid1Marks: mid1,
+                        mid2Marks: mid2,
+                        finalMidMarks: calculated.finalMidMarks,
+                        grade: calculated.grade,
+                        academicYear: row['Academic Year'] || row.academicYear || new Date().getFullYear(),
+                        isValid: true
+                    };
+                });
+
+                // Validate data
                 const validatedData = mappedData.map(row => ({
                     ...row,
-                    isValid: row.enrollmentNo && row.name && row.branch && row.semester && row.email
+                    isValid: row.enrollmentNo && row.subjectCode && row.branch && row.semester
                 }));
 
                 setExcelData(validatedData);
@@ -190,13 +229,13 @@ const Students = () => {
         setUploading(true);
         try {
             const cleanEntries = validEntries.map(({ id, isValid, ...data }) => data);
-            const results = await studentsService.bulkCreate(cleanEntries, userData);
+            const results = await resultsService.bulkCreate(cleanEntries, userData);
 
             if (results.success > 0) {
-                showSuccess(`Successfully uploaded ${results.success} students`);
+                showSuccess(`Successfully uploaded ${results.success} results`);
             }
             if (results.failed > 0) {
-                showError(`Failed to upload ${results.failed} students (duplicate enrollment numbers or invalid data)`);
+                showError(`Failed to upload ${results.failed} results`);
                 console.error('Upload errors:', results.errors);
             }
 
@@ -204,7 +243,7 @@ const Students = () => {
             setExcelData([]);
             loadData();
         } catch (error) {
-            showError(error.message || 'Failed to upload students');
+            showError(error.message || 'Failed to upload results');
         } finally {
             setUploading(false);
         }
@@ -219,83 +258,80 @@ const Students = () => {
         const templateData = [
             {
                 'Enrollment No': '2023CSE001',
-                'Name': 'John Doe',
-                'Branch': 'CSE',
+                'Student Name': 'John Doe',
+                'Branch': 'Computer Science and Engineering',
                 'Semester': 5,
                 'Section': 'A',
-                'Admission Year': 2023,
-                'IsDtoD': 'No',
-                'Date of Birth': '2004-01-15',
-                'Class Mentor': 'Dr. Smith',
-                'Contact No': '9876543210',
-                'Parent Contact No': '9876543211',
-                'Email': 'john.doe@example.com',
-                'ABC ID': 'ABC123456'
+                'Subject Code': 'CS301',
+                'Subject Name': 'Data Structures',
+                'Credits': 4,
+                'Mid-1 Marks': 17,
+                'Mid-2 Marks': 32,
+                'Academic Year': 2024
             },
             {
                 'Enrollment No': '2023CSE002',
-                'Name': 'Jane Smith',
-                'Branch': 'CSE',
+                'Student Name': 'Jane Smith',
+                'Branch': 'Computer Science and Engineering',
                 'Semester': 5,
                 'Section': 'A',
-                'Admission Year': 2023,
-                'IsDtoD': 'Yes',
-                'Date of Birth': '2004-03-20',
-                'Class Mentor': 'Dr. Smith',
-                'Contact No': '9876543212',
-                'Parent Contact No': '9876543213',
-                'Email': 'jane.smith@example.com',
-                'ABC ID': 'ABC123457'
+                'Subject Code': 'CS302',
+                'Subject Name': 'Database Management',
+                'Credits': 4,
+                'Mid-1 Marks': 18,
+                'Mid-2 Marks': 36,
+                'Academic Year': 2024
             }
         ];
 
         const worksheet = XLSX.utils.json_to_sheet(templateData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
-        XLSX.writeFile(workbook, 'Students_Template.xlsx');
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Results');
+        XLSX.writeFile(workbook, 'Results_Template.xlsx');
         showInfo('Template downloaded successfully');
     };
 
-    // Apply filters to students data
-    const filteredStudents = useMemo(() => {
-        return students.filter(student => {
-            if (filters.branch && student.branch !== filters.branch) return false;
-            if (filters.semester && String(student.semester) !== String(filters.semester)) return false;
-            if (filters.section && student.section !== filters.section) return false;
-            if (filters.admissionYear && String(student.admissionYear) !== String(filters.admissionYear)) return false;
+    // Apply filters to results data
+    const filteredResults = useMemo(() => {
+        return results.filter(result => {
+            if (filters.branch && result.branch !== filters.branch) return false;
+            if (filters.semester && String(result.semester) !== String(filters.semester)) return false;
+            if (filters.section && result.section !== filters.section) return false;
+            if (filters.academicYear && String(result.academicYear) !== String(filters.academicYear)) return false;
+            if (filters.enrollmentNo && !result.enrollmentNo.toLowerCase().includes(filters.enrollmentNo.toLowerCase())) return false;
             return true;
         });
-    }, [students, filters]);
+    }, [results, filters]);
 
     // Export filtered data to Excel
     const handleExportFiltered = () => {
-        if (filteredStudents.length === 0) {
+        if (filteredResults.length === 0) {
             showError('No data to export');
             return;
         }
 
-        const exportData = filteredStudents.map(student => ({
-            'Enrollment No': student.enrollmentNo,
-            'Name': student.name,
-            'Branch': student.branch,
-            'Semester': student.semester,
-            'Section': student.section,
-            'Admission Year': student.admissionYear || '',
-            'IsDtoD': student.isDtoD ? 'Yes' : 'No',
-            'Date of Birth': student.dateOfBirth || '',
-            'Class Mentor': student.classMentor || '',
-            'Contact No': student.contactNo || '',
-            'Parent Contact No': student.parentContactNo || '',
-            'Email': student.email || '',
-            'ABC ID': student.abcId || ''
+        const exportData = filteredResults.map(result => ({
+            'Enrollment No': result.enrollmentNo,
+            'Student Name': result.studentName,
+            'Branch': result.branch,
+            'Semester': result.semester,
+            'Section': result.section,
+            'Subject Code': result.subjectCode,
+            'Subject Name': result.subjectName,
+            'Credits': result.credits,
+            'Mid-1 Marks': result.mid1Marks,
+            'Mid-2 Marks': result.mid2Marks,
+            'Final Mid Marks': result.finalMidMarks,
+            'Grade': result.grade,
+            'Academic Year': result.academicYear
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(exportData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Results');
         const timestamp = new Date().toISOString().split('T')[0];
-        XLSX.writeFile(workbook, `Students_Export_${timestamp}.xlsx`);
-        showSuccess(`Exported ${filteredStudents.length} students`);
+        XLSX.writeFile(workbook, `Results_Export_${timestamp}.xlsx`);
+        showSuccess(`Exported ${filteredResults.length} results`);
     };
 
     // Clear all filters
@@ -304,19 +340,23 @@ const Students = () => {
             branch: '',
             semester: '',
             section: '',
-            admissionYear: ''
+            academicYear: '',
+            enrollmentNo: ''
         });
     };
 
     const columns = [
         { key: 'enrollmentNo', label: 'Enrollment No', sortable: true },
-        { key: 'name', label: 'Name', sortable: true },
+        { key: 'studentName', label: 'Student Name', sortable: true },
+        { key: 'subjectCode', label: 'Subject Code', sortable: true },
+        { key: 'subjectName', label: 'Subject Name', sortable: true },
         { key: 'branch', label: 'Branch' },
         { key: 'semester', label: 'Sem' },
         { key: 'section', label: 'Sec' },
-        { key: 'admissionYear', label: 'Year' },
-        { key: 'contactNo', label: 'Contact' },
-        { key: 'email', label: 'Email' }
+        { key: 'mid1Marks', label: 'Mid-1' },
+        { key: 'mid2Marks', label: 'Mid-2' },
+        { key: 'finalMidMarks', label: 'Final' },
+        { key: 'grade', label: 'Grade' }
     ];
 
     const renderActions = (row) => (
@@ -325,7 +365,7 @@ const Students = () => {
                 <span className="material-icons-round">edit</span>
             </button>
             {canPerformAction('delete') && (
-                <button className="btn-icon delete" onClick={(e) => { e.stopPropagation(); setSelectedStudent(row); setDeleteModalOpen(true); }}>
+                <button className="btn-icon delete" onClick={(e) => { e.stopPropagation(); setSelectedResult(row); setDeleteModalOpen(true); }}>
                     <span className="material-icons-round">delete</span>
                 </button>
             )}
@@ -359,7 +399,7 @@ const Students = () => {
                             </button>
                             <button className="btn-primary" onClick={() => handleOpenModal()}>
                                 <span className="material-icons-round">add</span>
-                                Add Student
+                                Add Result
                             </button>
                         </>
                     )}
@@ -369,6 +409,15 @@ const Students = () => {
             {/* Filters */}
             <div className="data-card" style={{ marginBottom: '1rem' }}>
                 <div className="form-row" style={{ margin: 0, gap: '1rem', padding: '1rem' }}>
+                    <div className="form-group" style={{ margin: 0, flex: 1 }}>
+                        <label>Enrollment No</label>
+                        <input
+                            type="text"
+                            placeholder="Search by enrollment..."
+                            value={filters.enrollmentNo}
+                            onChange={(e) => setFilters({ ...filters, enrollmentNo: e.target.value })}
+                        />
+                    </div>
                     <div className="form-group" style={{ margin: 0, flex: 1 }}>
                         <label>Branch</label>
                         <select
@@ -400,12 +449,12 @@ const Students = () => {
                         </select>
                     </div>
                     <div className="form-group" style={{ margin: 0, flex: 1 }}>
-                        <label>Admission Year</label>
+                        <label>Academic Year</label>
                         <input
                             type="number"
-                            placeholder="e.g., 2023"
-                            value={filters.admissionYear}
-                            onChange={(e) => setFilters({ ...filters, admissionYear: e.target.value })}
+                            placeholder="e.g., 2024"
+                            value={filters.academicYear}
+                            onChange={(e) => setFilters({ ...filters, academicYear: e.target.value })}
                         />
                     </div>
                     <div className="form-group" style={{ margin: 0, flex: '0 0 auto', alignSelf: 'flex-end' }}>
@@ -419,138 +468,156 @@ const Students = () => {
 
             <DataTable
                 columns={columns}
-                data={filteredStudents}
+                data={filteredResults}
                 loading={loading}
                 searchable={true}
-                searchKeys={['enrollmentNo', 'name', 'email', 'contactNo']}
+                searchKeys={['enrollmentNo', 'studentName', 'subjectCode', 'subjectName']}
                 actions={renderActions}
             />
 
-            {/* Student Form Modal */}
-            <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={selectedStudent ? 'Edit Student' : 'Add Student'} size="large">
+            {/* Result Form Modal */}
+            <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={selectedResult ? 'Edit Result' : 'Add Result'} size="large">
                 <form className="modal-form" onSubmit={handleSubmit}>
                     <div className="form-row">
                         <div className="form-group">
                             <label>Enrollment No *</label>
-                            <input
-                                type="text"
+                            <select
                                 value={formData.enrollmentNo}
-                                onChange={(e) => setFormData({ ...formData, enrollmentNo: e.target.value })}
+                                onChange={(e) => handleStudentSelect(e.target.value)}
                                 required
-                            />
+                                disabled={!!selectedResult}
+                            >
+                                <option value="">Select Student</option>
+                                {students.map(s => (
+                                    <option key={s.id} value={s.enrollmentNo}>
+                                        {s.enrollmentNo} - {s.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <div className="form-group">
-                            <label>Name *</label>
+                            <label>Student Name</label>
                             <input
                                 type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                required
+                                value={formData.studentName}
+                                readOnly
+                                disabled
                             />
                         </div>
                     </div>
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Branch *</label>
-                            <select value={formData.branch} onChange={(e) => setFormData({ ...formData, branch: e.target.value })} required>
-                                <option value="">Select Branch</option>
-                                {branches.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
-                            </select>
+                            <label>Branch</label>
+                            <input
+                                type="text"
+                                value={formData.branch}
+                                readOnly
+                                disabled
+                            />
                         </div>
                         <div className="form-group">
-                            <label>Semester *</label>
-                            <select value={formData.semester} onChange={(e) => setFormData({ ...formData, semester: e.target.value })} required>
-                                <option value="">Select</option>
-                                {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
+                            <label>Semester</label>
+                            <input
+                                type="text"
+                                value={formData.semester}
+                                readOnly
+                                disabled
+                            />
                         </div>
                         <div className="form-group">
-                            <label>Section *</label>
-                            <select value={formData.section} onChange={(e) => setFormData({ ...formData, section: e.target.value })} required>
-                                <option value="">Select</option>
-                                {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
+                            <label>Section</label>
+                            <input
+                                type="text"
+                                value={formData.section}
+                                readOnly
+                                disabled
+                            />
                         </div>
                     </div>
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Admission Year</label>
+                            <label>Subject Code *</label>
+                            <input
+                                type="text"
+                                value={formData.subjectCode}
+                                onChange={(e) => setFormData({ ...formData, subjectCode: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Subject Name *</label>
+                            <input
+                                type="text"
+                                value={formData.subjectName}
+                                onChange={(e) => setFormData({ ...formData, subjectName: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Credits *</label>
                             <input
                                 type="number"
-                                value={formData.admissionYear}
-                                onChange={(e) => setFormData({ ...formData, admissionYear: e.target.value })}
-                                placeholder="2023"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Date of Birth</label>
-                            <input
-                                type="date"
-                                value={formData.dateOfBirth}
-                                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={formData.isDtoD}
-                                    onChange={(e) => setFormData({ ...formData, isDtoD: e.target.checked })}
-                                    style={{ width: 'auto', margin: 0 }}
-                                />
-                                Diploma to Degree (DtoD)
-                            </label>
-                        </div>
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Contact No</label>
-                            <input
-                                type="tel"
-                                value={formData.contactNo}
-                                onChange={(e) => setFormData({ ...formData, contactNo: e.target.value })}
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Parent Contact No</label>
-                            <input
-                                type="tel"
-                                value={formData.parentContactNo}
-                                onChange={(e) => setFormData({ ...formData, parentContactNo: e.target.value })}
+                                value={formData.credits}
+                                onChange={(e) => setFormData({ ...formData, credits: e.target.value })}
+                                required
+                                min="1"
+                                max="10"
                             />
                         </div>
                     </div>
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Email ID {!selectedStudent && '*'}</label>
+                            <label>Mid-1 Marks (Out of 20) *</label>
                             <input
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                required={!selectedStudent}
+                                type="number"
+                                value={formData.mid1Marks}
+                                onChange={(e) => handleMarksChange('mid1Marks', e.target.value)}
+                                required
+                                min="0"
+                                max="20"
+                                step="0.1"
                             />
-                            {!selectedStudent && (
-                                <small style={{ color: '#666', marginTop: '4px', display: 'block' }}>
-                                    Student will login with this email. Default password: Enrollment No
-                                </small>
-                            )}
                         </div>
                         <div className="form-group">
-                            <label>ABC ID</label>
+                            <label>Mid-2 Marks (Out of 40) *</label>
+                            <input
+                                type="number"
+                                value={formData.mid2Marks}
+                                onChange={(e) => handleMarksChange('mid2Marks', e.target.value)}
+                                required
+                                min="0"
+                                max="40"
+                                step="0.1"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Final Mid Marks (Out of 30)</label>
                             <input
                                 type="text"
-                                value={formData.abcId}
-                                onChange={(e) => setFormData({ ...formData, abcId: e.target.value })}
+                                value={formData.finalMidMarks}
+                                readOnly
+                                disabled
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Grade</label>
+                            <input
+                                type="text"
+                                value={formData.grade}
+                                readOnly
+                                disabled
                             />
                         </div>
                     </div>
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Class Mentor</label>
+                            <label>Academic Year *</label>
                             <input
-                                type="text"
-                                value={formData.classMentor}
-                                onChange={(e) => setFormData({ ...formData, classMentor: e.target.value })}
+                                type="number"
+                                value={formData.academicYear}
+                                onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
+                                required
+                                placeholder="2024"
                             />
                         </div>
                     </div>
@@ -562,11 +629,11 @@ const Students = () => {
             </Modal>
 
             {/* Excel Upload Preview Modal */}
-            <Modal isOpen={uploadModalOpen} onClose={() => { setUploadModalOpen(false); setExcelData([]); }} title="Preview Students Upload" size="large">
+            <Modal isOpen={uploadModalOpen} onClose={() => { setUploadModalOpen(false); setExcelData([]); }} title="Preview Results Upload" size="large">
                 <div className="excel-preview">
                     <div className="excel-info">
                         <span className="material-icons-round">info</span>
-                        <p>Review the data below. Entries marked in red have missing required fields (Enrollment No, Name, Branch, Semester, Email).</p>
+                        <p>Review the data below. Entries marked in red have missing required fields (Enrollment No, Subject Code, Branch, Semester).</p>
                     </div>
 
                     <div className="excel-table-container">
@@ -574,13 +641,15 @@ const Students = () => {
                             <thead>
                                 <tr>
                                     <th>Enrollment No</th>
-                                    <th>Name</th>
+                                    <th>Student Name</th>
+                                    <th>Subject Code</th>
+                                    <th>Subject Name</th>
                                     <th>Branch</th>
                                     <th>Sem</th>
-                                    <th>Section</th>
-                                    <th>Year</th>
-                                    <th>DtoD</th>
-                                    <th>Contact</th>
+                                    <th>Mid-1</th>
+                                    <th>Mid-2</th>
+                                    <th>Final</th>
+                                    <th>Grade</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -588,13 +657,15 @@ const Students = () => {
                                 {excelData.map((row, index) => (
                                     <tr key={row.id} className={row.isValid ? '' : 'invalid-row'}>
                                         <td>{row.enrollmentNo || '-'}</td>
-                                        <td>{row.name || '-'}</td>
+                                        <td>{row.studentName || '-'}</td>
+                                        <td>{row.subjectCode || '-'}</td>
+                                        <td>{row.subjectName || '-'}</td>
                                         <td>{row.branch || '-'}</td>
                                         <td>{row.semester || '-'}</td>
-                                        <td>{row.section || '-'}</td>
-                                        <td>{row.admissionYear || '-'}</td>
-                                        <td>{row.isDtoD ? 'Yes' : 'No'}</td>
-                                        <td>{row.contactNo || '-'}</td>
+                                        <td>{row.mid1Marks || '-'}</td>
+                                        <td>{row.mid2Marks || '-'}</td>
+                                        <td>{row.finalMidMarks || '-'}</td>
+                                        <td>{row.grade || '-'}</td>
                                         <td>
                                             <button className="btn-icon delete" onClick={() => handleRemoveExcelRow(index)} title="Remove">
                                                 <span className="material-icons-round">close</span>
@@ -627,7 +698,7 @@ const Students = () => {
                             onClick={handleConfirmUpload}
                             disabled={uploading || excelData.filter(r => r.isValid).length === 0}
                         >
-                            {uploading ? 'Uploading...' : `Upload ${excelData.filter(r => r.isValid).length} Students`}
+                            {uploading ? 'Uploading...' : `Upload ${excelData.filter(r => r.isValid).length} Results`}
                         </button>
                     </div>
                 </div>
@@ -637,10 +708,10 @@ const Students = () => {
                 isOpen={deleteModalOpen}
                 onClose={() => setDeleteModalOpen(false)}
                 onConfirm={handleDelete}
-                message="Delete this student?"
+                message="Delete this result?"
             />
         </div>
     );
 };
 
-export default Students;
+export default Results;

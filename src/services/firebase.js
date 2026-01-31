@@ -29,12 +29,13 @@ import {
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyBOtBlp2l7dww4miSqXBXdCT-ZDYRemdEw",
+    apiKey: "AIzaSyC3G0ciSYr2FmnS_wII1mcNLMSXi5u2LME",
     authDomain: "lmd-ait.firebaseapp.com",
     projectId: "lmd-ait",
     storageBucket: "lmd-ait.firebasestorage.app",
     messagingSenderId: "402242157132",
-    appId: "1:402242157132:web:admin-panel"
+    appId: "1:402242157132:web:edbf08967293ad320112e9",
+    measurementId: "G-HBP5JTRQV4"
 };
 
 // Initialize Firebase (primary app)
