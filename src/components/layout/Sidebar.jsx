@@ -44,7 +44,8 @@ const Sidebar = ({ collapsed, open, onToggle, onClose }) => {
             title: 'Reports',
             items: [
                 { page: 'analytics', icon: 'analytics', label: 'Analytics' },
-                { page: 'attendance', icon: 'fact_check', label: 'Attendance' }
+                { page: 'attendance', icon: 'fact_check', label: 'Attendance' },
+                { page: 'results', icon: 'grade', label: 'Results' }
             ]
         }
     ];

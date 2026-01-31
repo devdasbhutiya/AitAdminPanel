@@ -37,24 +37,24 @@ export const isRoleAllowed = (role) => {
  */
 export const PERMISSIONS = {
     admin: {
-        pages: ['dashboard', 'branches', 'courses', 'timetable', 'users', 'students', 'assignments', 'events', 'notices', 'analytics', 'attendance'],
+        pages: ['dashboard', 'branches', 'courses', 'timetable', 'users', 'students', 'assignments', 'events', 'notices', 'analytics', 'attendance', 'results'],
         actions: { create: true, read: true, update: true, delete: true },
         scope: 'all',
         canManageAdmins: true
     },
     principal: {
-        pages: ['dashboard', 'branches', 'courses', 'timetable', 'users', 'students', 'assignments', 'events', 'notices', 'analytics', 'attendance'],
+        pages: ['dashboard', 'branches', 'courses', 'timetable', 'users', 'students', 'assignments', 'events', 'notices', 'analytics', 'attendance', 'results'],
         actions: { create: true, read: true, update: true, delete: true },
         scope: 'all',
         canManageAdmins: false
     },
     hod: {
-        pages: ['dashboard', 'courses', 'timetable', 'students', 'assignments', 'events', 'notices', 'analytics', 'attendance'],
+        pages: ['dashboard', 'courses', 'timetable', 'students', 'assignments', 'events', 'notices', 'analytics', 'attendance', 'results'],
         actions: { create: true, read: true, update: true, delete: true },
         scope: 'department'
     },
     faculty: {
-        pages: ['timetable', 'students', 'assignments', 'notices', 'events', 'attendance'],
+        pages: ['timetable', 'students', 'assignments', 'notices', 'events', 'attendance', 'results'],
         actions: { create: true, read: true, update: true, delete: false },
         scope: 'assigned'
     },

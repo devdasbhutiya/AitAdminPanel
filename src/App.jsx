@@ -15,7 +15,8 @@ import {
   Assignments,
   Analytics,
   Attendance,
-  Students
+  Students,
+  Results
 } from './pages';
 import './styles/index.css';
 
@@ -98,6 +99,12 @@ function App() {
               <Route path="students" element={
                 <ProtectedRoute requiredPage="students">
                   <Students />
+                </ProtectedRoute>
+              } />
+
+              <Route path="results" element={
+                <ProtectedRoute requiredPage="results">
+                  <Results />
                 </ProtectedRoute>
               } />
             </Route>
